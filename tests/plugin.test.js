@@ -596,6 +596,30 @@ test('renderSnapshot injects key facts but keeps project and daily on-demand', a
   clean(dir)
 })
 
+test('issue #43: the dtodo turn-end hint reaches user sessions only, never subagents', () => {
+  const dir = tempDir()
+  const config = resolveConfig({ memoryDir: dir })
+  const store = new MemoryStore(config.memoryDir, config)
+  // 真人会话：保留「收尾检查待办」职责（dtodo 提示是面向用户的收尾指令）
+  const user = renderSnapshot(config, store, { id: 'a', session: { header: {} } })
+  assert.ok(user.includes('待办（dtodo）'))
+  assert.ok(user.includes('收尾时调用 dtodo list'))
+  // 子代理：收尾段整体降级，dtodo 提示必须一并豁免（issue #43 根因：
+  // 同一函数内 review 计数 / 写入看门狗 / 收尾标题都已按 isSubagent 降级，
+  // 唯独 todoHint 漏了 → 子代理被诱导多调一次 dtodo 白烧 token）
+  const sub = renderSnapshot(config, store, { id: 'b', session: { header: { origin: 'subagent' } } })
+  assert.ok(!sub.includes('待办（dtodo）'), 'subagent snapshot never carries the dtodo turn-end hint')
+  assert.ok(!sub.includes('收尾时调用 dtodo list'))
+  // 头部工具清单的事实陈述保留（子代理确实注册了 dtodo 工具），只有收尾指导被豁免
+  assert.ok(sub.includes('dtodo 待办工具'))
+  // 待办能力关闭时两边都不注入该提示
+  const off = resolveConfig({ memoryDir: dir, todoEnabled: false })
+  const offStore = new MemoryStore(off.memoryDir, off)
+  const offUser = renderSnapshot(off, offStore, { id: 'a', session: { header: {} } })
+  assert.ok(!offUser.includes('待办（dtodo）'))
+  clean(dir)
+})
+
 test('renderSnapshot per-turn write switches compose the hint per track', () => {
   const dir = tempDir()
   const config = resolveConfig({ memoryDir: dir })
