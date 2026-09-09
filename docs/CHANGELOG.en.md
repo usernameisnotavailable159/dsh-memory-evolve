@@ -6,7 +6,7 @@ All version changes for this repository, in reverse chronological order.
 
 ---
 
-## Unreleased
+## 2026-09-09
 
 ### Fixed
 
