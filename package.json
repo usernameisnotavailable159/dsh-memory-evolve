@@ -1,7 +1,7 @@
 {
   "name": "dsh-memory-evolve",
   "version": "0.1.0",
-  "description": "为 DeepSeek Harness 带来分层记忆（全局 / 用户 / 项目 / GIT 分支 / 每日）与自我进化（经验沉淀 + 技能自动创建）和技能管理、待办管理、CLI 调度（kimi/codex/grok/hermes 等外部 AI 统一调度）、临时信息便签，带 WebUI 管理界面。Hermes-style long-term memory, self-evolution, skills, todos and external CLI agent dispatch for DeepSeek Harness.",
+  "description": "\u4e3a DeepSeek Harness \u5e26\u6765\u5206\u5c42\u8bb0\u5fc6\uff08\u5168\u5c40 / \u7528\u6237 / \u9879\u76ee / GIT \u5206\u652f / \u6bcf\u65e5\uff09\u4e0e\u81ea\u6211\u8fdb\u5316\uff08\u7ecf\u9a8c\u6c89\u6dc0 + \u6280\u80fd\u81ea\u52a8\u521b\u5efa\uff09\u548c\u6280\u80fd\u7ba1\u7406\u3001\u5f85\u529e\u7ba1\u7406\u3001CLI \u8c03\u5ea6\uff08kimi/codex/grok/hermes \u7b49\u5916\u90e8 AI \u7edf\u4e00\u8c03\u5ea6\uff09\u3001\u4e34\u65f6\u4fe1\u606f\u4fbf\u7b7e\uff0c\u5e26 WebUI \u7ba1\u7406\u754c\u9762\u3002Hermes-style long-term memory, self-evolution, skills, todos and external CLI agent dispatch for DeepSeek Harness.",
   "private": true,
   "type": "module",
   "main": "lib/index.js",
@@ -21,6 +21,9 @@
         "@deepseek-ai/dsh-client-runtime"
       ],
       "platform": "web"
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
     }
   }
 }

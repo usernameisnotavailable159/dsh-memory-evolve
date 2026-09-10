@@ -78,6 +78,7 @@ await esbuild.build({
   entryPoints: [join(ROOT, 'src/client/index.ts')],
   outfile: join(ROOT, 'lib/client.js'),
   bundle: true,
+  minify: true,
   format: 'cjs',
   platform: 'browser',
   target: 'es2022',
