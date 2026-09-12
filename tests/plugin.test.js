@@ -257,6 +257,58 @@ test('search docs tool: 默认禁用不注册；配置/运行时 state 开启后
   clean(dir3)
 })
 
+test('search docs tool: 同名工具已注册时 apply 不整体失败（issue #23 同款幂等保护）', () => {
+  const dir = tempDir()
+  const state = { tools: [], contexts: [], commands: [], listeners: [], routes: [] }
+  const services = {
+    tools: {
+      register(def) {
+        // 模拟宿主已在 global 层注册过同名工具：第二次注册直接抛 DSH 的
+        // duplicate 错误。修复前 createSearchDocsController 的首次 sync
+        // 会把这个异常抛到 apply，导致整个插件装配失败。
+        if (state.tools.some((t) => t.name === def.name)) {
+          throw new Error(`tool "${def.name}" is already registered (for a per-agent variant, register through that agent's \`agent.ctx\` instead)`)
+        }
+        state.tools.push(def)
+        return () => {
+          const i = state.tools.indexOf(def)
+          if (i >= 0) state.tools.splice(i, 1)
+        }
+      },
+      get: () => undefined,
+    },
+    systemPrompt: { context: (def) => { state.contexts.push(def); return () => {} } },
+    commands: { register: (def) => { state.commands.push(def); return () => {} } },
+    webServer: { register: (route) => { state.routes.push(route); return () => {} } },
+  }
+  const ctx = {
+    state,
+    tools: services.tools,
+    systemPrompt: services.systemPrompt,
+    commands: services.commands,
+    webServer: services.webServer,
+    on: () => () => {},
+    inject: (deps, cb) => {
+      if (!deps.every((dep) => services[dep] !== undefined)) return { dispose: () => {} }
+      return { dispose: cb(ctx) ?? (() => {}) }
+    },
+    effect: (fn) => fn() ?? (() => {}),
+    get: (key) => services[key],
+    logger: { warn: () => {}, info: () => {}, error: () => {} },
+  }
+  // 预置一个同名工具，模拟重复装配/global 层已被注册
+  state.tools.push({ name: 'memory_evolve_search_local_files' })
+  try {
+    apply(ctx, { memoryDir: dir, searchDocsEnabled: true })
+    // apply 不抛错，且其余核心工具仍注册
+    assert.ok(ctx.state.tools.some((t) => t.name === 'memory'), 'memory tool still registered after duplicate search tool')
+    assert.ok(ctx.state.tools.some((t) => t.name === 'skill_manage'), 'skill tool still registered after duplicate search tool')
+  } finally {
+    clean(dir)
+  }
+})
+
+
 test('memory tool end-to-end add/list/replace/remove', async () => {
   const dir = tempDir()
   const ctx = fakeCtx()

@@ -210,11 +210,30 @@ function setupSession(rig, sessionId = 'session-1', userText = '帮我写个函�
   return { agent, session, events }
 }
 
+/**
+ * 轮询等待条件成立（默认 2s 上限，5ms 间隔）。
+ * 用于替代固定 setTimeout —— 后者在负载高时不可靠。
+ */
+async function waitFor(pred, timeoutMs = 2000, stepMs = 5) {
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    try { if (pred()) return true } catch { /* 条件未就绪 */ }
+    await new Promise((r) => setTimeout(r, stepMs))
+  }
+  return false
+}
+
 test('装配：启用后 agent/created 建运行时，turn/end 触发评审并 steer', async (t) => {
   const rig = rigFor(t)
   const { agent } = setupSession(rig)
-  // 等 drain
-  await new Promise((resolve) => setTimeout(resolve, 20))
+  // 等 drain：**轮询到目标状态**（steer 已投递 + 记录已落），而不是死等 20ms。
+  // 死等在全量并发跑（803 用例）时会因事件循环繁忙而超时 → 假失败（实测 flaky：
+  // 单独跑 3/3 通过、全量跑偶发 0!==1）。
+  const ready = await waitFor(
+    () => agent.steers.length > 0 && rig.ctrl.queryRecords({ sessionId: 'session-1' }).records.length > 0,
+    3000,
+  )
+  assert.equal(ready, true, '等待 steer 投递超时（3s）')
   // 状态
   const status = rig.ctrl.status('session-1')
   assert.equal(status.effectiveEnabled, true)

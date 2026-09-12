@@ -708,6 +708,34 @@ test('todo controller: toggling registers, disposes, then restores dtodo', async
   }
 })
 
+test('todo controller: 同名工具已注册时幂等跳过（issue #23 同款保护）', async () => {
+  const dir = tempDir()
+  try {
+    const { createTodoController } = await import('../lib/todo.js')
+    const registered = new Set(['dtodo'])
+    const ctx = {
+      tools: {
+        register(def) {
+          if (registered.has(def.name)) {
+            throw new Error(`tool "${def.name}" is already registered (for a per-agent variant, register through that agent's \`agent.ctx\` instead)`)
+          }
+          registered.add(def.name)
+          return () => { registered.delete(def.name) }
+        },
+      },
+    }
+    // 模拟宿主重复装配：dtodo 已存在于 global 层，createTodoController
+    // 首次 sync 遇到 duplicate 不应把整个插件 apply 打挂。
+    const ctrl = createTodoController(ctx, { todoToolName: 'dtodo' }, () => ({}), new TodoStore(dir))
+    assert.equal(ctrl.enabled(), true)
+    ctrl.sync()
+    assert.equal(ctrl.enabled(), true)
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+
 test('todo disabled: API rejects reads and writes without changing stored todos', async () => {
   const api = await bootTodoApi({ todoEnabled: false })
   try {

@@ -37,9 +37,16 @@ import {
 // 没有 callback，成功时 Promise 永不 resolve，会导致测试挂起）。
 const realRun = promisify(execFile)
 
-/** git 同步执行助手（测试基建用）。 */
+/** git 同步执行助手（测试基建用）。
+ *  显式钉住初始分支：`init -b main`（git ≥2.28），并用 init.defaultBranch 兜底旧版 git。
+ *  背景：宿主 git 默认分支可能是 master（PC 实测），而本套件全程按 main 组织历史 →
+ *  不钉会让 `push origin main` 报 "src refspec main does not match any"（39 例假失败）。 */
 function sh(dir, args) {
-  return execFileSync('git', args, { cwd: dir, encoding: 'utf8' }).trim()
+  return execFileSync('git', args, {
+    cwd: dir,
+    encoding: 'utf8',
+    env: { ...process.env, GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: 'init.defaultBranch', GIT_CONFIG_VALUE_0: 'main' },
+  }).trim()
 }
 
 function tempRoot() {
@@ -57,9 +64,9 @@ function setupRepo() {
   const origin = join(root, 'origin.git')
   const dev = join(root, 'dev')
   const consumer = join(root, 'consumer')
-  sh(root, ['init', '--bare', '-q', origin])
+  sh(root, ['init', '--bare', '-q', '-b', 'main', origin])
   mkdirSync(dev)
-  sh(dev, ['init', '-q'])
+  sh(dev, ['init', '-q', '-b', 'main'])
   sh(dev, ['config', 'user.email', 't@t'])
   sh(dev, ['config', 'user.name', 't'])
   sh(dev, ['remote', 'add', 'origin', origin])
@@ -166,9 +173,9 @@ test('no-release：远端没有 v* tag', async () => {
   const root = tempRoot()
   const origin = join(root, 'origin.git')
   const consumer = join(root, 'consumer')
-  sh(root, ['init', '--bare', '-q', origin])
+  sh(root, ['init', '--bare', '-q', '-b', 'main', origin])
   mkdirSync(join(root, 'dev'))
-  sh(join(root, 'dev'), ['init', '-q'])
+  sh(join(root, 'dev'), ['init', '-q', '-b', 'main'])
   sh(join(root, 'dev'), ['config', 'user.email', 't@t'])
   sh(join(root, 'dev'), ['config', 'user.name', 't'])
   sh(join(root, 'dev'), ['remote', 'add', 'origin', origin])
@@ -434,7 +441,7 @@ test('remote 变化：旧缓存失效并重检', async () => {
   assert.ok(firstUrl.includes('origin.git'))
   // 换 remote（指向另一个空 bare 仓库）→ 检测应重跑并识别无发布版本。
   const empty = join(dirname(origin), 'empty.git')
-  sh(dirname(origin), ['init', '--bare', '-q', empty])
+  sh(dirname(origin), ['init', '--bare', '-q', '-b', 'main', empty])
   sh(consumer, ['remote', 'set-url', 'origin', empty])
   const s = await checker.status()
   // 新 remote 无 tag → no-release（说明确实重检了，没有吃旧缓存）
@@ -595,7 +602,7 @@ test('[P0-2] 非 owner 释放：pid/token 不匹配不删锁', async () => {
   const root = tempRoot()
   const repo = join(root, 'repo')
   mkdirSync(repo)
-  sh(repo, ['init', '-q'])
+  sh(repo, ['init', '-q', '-b', 'main'])
   const gitDir = sh(repo, ['rev-parse', '--absolute-git-dir'])
   const lock = await acquireUpdateLock(gitDir)
   assert.equal(lock.ok, true)
@@ -614,7 +621,7 @@ test('[P0-2] stale 锁可抢占', async () => {
   const root = tempRoot()
   const repo = join(root, 'repo')
   mkdirSync(repo)
-  sh(repo, ['init', '-q'])
+  sh(repo, ['init', '-q', '-b', 'main'])
   const gitDir = sh(repo, ['rev-parse', '--absolute-git-dir'])
   const lockPath = join(gitDir, 'dsh-memory-evolve', 'update.lock')
   mkdirSync(dirname(lockPath), { recursive: true })
@@ -891,7 +898,7 @@ test('[P0-2-v3] stale 阈值内（10 分钟）活跃锁不被抢占', async () =
   const root = tempRoot()
   const repo = join(root, 'repo')
   mkdirSync(repo)
-  sh(repo, ['init', '-q'])
+  sh(repo, ['init', '-q', '-b', 'main'])
   const gitDir = sh(repo, ['rev-parse', '--absolute-git-dir'])
   const lockPath = join(gitDir, 'dsh-memory-evolve', 'update.lock')
   mkdirSync(dirname(lockPath), { recursive: true })
@@ -943,9 +950,9 @@ function setupRepoLateTag() {
   const origin = join(root, 'origin.git')
   const dev = join(root, 'dev')
   const consumer = join(root, 'consumer')
-  sh(root, ['init', '--bare', '-q', origin])
+  sh(root, ['init', '--bare', '-q', '-b', 'main', origin])
   mkdirSync(dev)
-  sh(dev, ['init', '-q'])
+  sh(dev, ['init', '-q', '-b', 'main'])
   sh(dev, ['config', 'user.email', 't@t'])
   sh(dev, ['config', 'user.name', 't'])
   sh(dev, ['remote', 'add', 'origin', origin])
