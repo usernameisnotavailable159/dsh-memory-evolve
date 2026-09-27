@@ -27,8 +27,6 @@ import { ModelsTabView } from './ModelsTabView.tsx'
 import { UiSettingsTabView } from './UiSettingsView.tsx'
 import { CoIView } from './CoIView.tsx'
 import { HeaderActions } from './HeaderActions.tsx'
-import { AdvisorHost } from './advisor/AdvisorPanel.tsx'
-import { ADVISOR_CONNECTION_RESET_EVENT } from './advisor/advisor-store.ts'
 import { BroadcastView } from './BroadcastView.tsx'
 import { PromptView } from './PromptView.tsx'
 import { BookmarksView } from './BookmarksView.tsx'
@@ -48,12 +46,9 @@ import skillBrowserStyles from './skills-browser/styles.css'
 import uiSettingsStyles from './ui-settings-styles.css'
 import mermaidStyles from './mermaid-render.css'
 import bookmarkStyles from './bookmark-styles.css'
-import advisorStyles from './advisor/advisor-styles.css'
 import mobileCss from './mobile.css'
 import { createInputSheetEnhance } from './mobile-input-sheet'
-import { createNotificationBell } from './notification-bell.tsx'
 import { createTodoTabLifecycle, RUNTIME_CONFIG_CHANGED } from './todo-tab-lifecycle.js'
-import notificationStyles from './notification-styles.css'
 
 /** Locale namespace owned by this plugin. */
 const NS = 'memory-evolve'
@@ -260,8 +255,6 @@ export const zh = {
   'header.setAlias.clear': '清除',
   'header.setAlias.saved': '别名已保存',
   'header.setAlias.cleared': '别名已清除',
-  'advisor.header.toggle': '会话评审',
-  'advisor.header.toggle.title': '打开或折叠会话评审悬浮面板',
   'promptTab.label': '提示词',
   'promptTab.label.active': '🔴 提示词 ({count})',
   'settingsTab.label': 'Memory Evolve 设置',
@@ -749,8 +742,6 @@ export const zh = {
   'panel.guide.prompt.desc': '把常用的工作范式固化成提示词资产：选中一条即可注入——写入后模型下一轮自动看到、不打断回复；支持一次性、持续 N 轮、每 M 回合提醒一次（次数 / 间隔可输入任意数字，按对话回合计数自动过期），「注入中」可随时停止；也支持临时注入：不建提示词直接输入内容注入，自动存入库中。默认禁用：在「配置」里打开「提示词管理器」开关，Tab 刷新后出现。',
   'panel.guide.models.title': '模型设置（de_models）',
   'panel.guide.models.desc': '「模型设置」Tab + de_models 工具：表格一览 DSH 现有供应商与模型，给每个模型设置「插件侧」的启用状态、备注、是否支持思考与可用 / 推荐思考等级（可勾选等级白名单、添加自定义等级）——这些配置只对本插件有用（决定 de_models 查询口径与 Tab 展示），不修改、也不影响 DSH 自身的模型设置（DSH 的模型配置仍以官方「设置 → 模型」为准）。默认禁用：在「配置」里打开「模型设置」开关后，Tab 刷新出现、de_models 工具生效。',
-  'panel.guide.advisor.title': '会话评审（Advisor）',
-  'panel.guide.advisor.desc': '给每个会话挂一个独立评审员——它只观察你在界面上看到的对话（不含思考 / 工具调用），每轮实时评审，需要时以「用户指令」的形式提醒你（info / nit / concern / blocker 四级；info 默认仅记录；对话流中以折叠行 [severity] 显示，方便你认出哪些话是评审员说的）。评审员是持续会话——记住全部历史、永不截断；面板里可新建评审会话（重头开始）、直接提问、设置四层级约束（系统提示词 / 项目约束 / 会话约束 / 本次评审会话约束，越局部越优先）。默认关闭：先在「配置」打开总闸，再在会话页悬浮面板里为本会话手动启用；评审模型缺省继承当前会话模型，可单独配置。',
   'panel.guide.broadcast.title': '会话广播（de_broadcast）',
   'panel.guide.broadcast.desc': 'DSH 会话之间传递消息：复制本会话 ID（会话头部「⧉ 复制会话ID」按钮）发给另一个会话，让它的 AI 用 de_broadcast send 把内容发给你——接收方快照定点注入未读提示（只有接收者看得到，其他会话无感知），AI 用 list / read 查看全文处理（全员已读自动删除）；超长内容自动落文件。房间（聊天室）支持多人协作、可跨工作目录；项目群可发给整个目录。默认关闭：在「配置」里打开「会话广播」开关。',
   'panel.guide.session.title': '会话搜索（de_session_search）',
@@ -835,23 +826,10 @@ export const zh = {
   'panel.config.searchDocsMode.filename': '仅文件名搜索',
   'panel.config.searchDocsMode.content': '仅内容搜索',
   'panel.config.searchDocsMode.off': '关闭（工具不可见）',
-  'panel.config.advisorEnabled': '会话评审（Advisor）',
-  'panel.config.advisorEnabled.hint': '会话评审模块总闸：开启后**每个会话仍默认关闭**——需在悬浮面板里用状态条开关为本会话手动启用（评审消耗额外模型调用，按需开启；手动开过的会话刷新/重启后保持）。总闸关闭时评审停止、会话评审入口（会话头部按钮/悬浮面板）全部隐藏，模块整体不可用；重新开启后立即恢复',
   'panel.config.broadcastEnabled': '会话广播',
   'panel.config.broadcastEnabled.hint': '启用会话广播（de_broadcast）：DSH 会话间消息传递——快照「会话广播」未读提示（收件箱式列出 id+主题+发送者+时间）+ de_broadcast 工具（send/list/read，read 即消费、全读后自动删除、8KB 落文件、30 天清理）+ 会话广播管理面板 Tab。**独立于 COI 调度**（默认关闭，可单独开启）；关闭时以上全部不可见；「你的会话 ID」常驻快照段不受影响；会话头部「⧉ 复制会话ID」「✎ 别名」按钮属「会话编排」模块（面板顶部另有复制入口）',
   'panel.config.notifyEnabled': '通知模块',
-  'panel.config.notifyEnabled.hint': '启用通知模块（de_notify）：AI 完成任务后主动发通知给你——de_notify 手动工具（随时可发、无频率限制，channels 含 feishu/qq/weixin/wecom/web）+ COI 任务完成自动通知（coiNotifyChannels 选渠道）。web 渠道=发到本网页右上角站内通知铃铛：落盘 + 未读数字徽标 + 弹窗查看「哪个会话发来什么通知」+ 点击跳转到该会话。独立模块，默认关闭；IM 渠道依赖对应渠道插件（dsh-feishu 等，未装如实报渠道不可用），web 渠道由本插件内置零依赖；关闭时工具不注册、铃铛消失、COI 自动通知静默跳过',
-  'notify.title': '通知',
-  'notify.bellAria': '站内通知',
-  'notify.empty': '暂无未读通知',
-  'notify.loading': '加载中…',
-  'notify.readAll': '全部已读',
-  'notify.system': '系统',
-  'notify.jump': '跳转到会话',
-  'notify.delete': '删除',
-  'notify.viewDetail': '查看详情',
-  'notify.close': '关闭',
-  'notify.markRead': '已读',
+  'panel.config.notifyEnabled.hint': '启用通知模块（de_notify）：AI 完成任务后主动发通知给你——de_notify 手动工具（随时可发、无频率限制，channels 含 feishu/qq/weixin/wecom）+ COI 任务完成自动通知（coiNotifyChannels 选渠道）。独立模块，默认关闭；渠道依赖对应渠道插件（dsh-feishu 等，未装如实报渠道不可用）；关闭时工具不注册、COI 自动通知静默跳过',
   'panel.config.syncEnabled': '记忆同步',
   'panel.config.syncEnabled.hint': '**模块开关**：启用「记忆同步」模块——对话页出现「记忆同步」Tab、/memory_sync 命令可用。**注意：这只是模块启用，不等于任何项目开始同步**——每个项目由「记忆同步」Tab 里的「本项目同步」开关单独启用（默认关；未启用的项目保持纯本地状态，不建 Git 仓库、不生成身份证）。同步机制：项目记忆（KEY + 项目日志 + 归档 + 项目待办）经 Git 对账到记忆远端——不填地址默认用你的主代码仓库（专属分支，零配置）；填共享记忆仓库地址 = 一个私有仓库装所有项目的记忆（全局记忆二期也只能用它同步）。push 永远需你显式触发',
   'panel.config.sessionSearchEnabled': '会话搜索',
@@ -1077,8 +1055,6 @@ export const en: Record<MemoryEvolveKey, string> = {
   'header.setAlias.clear': 'Clear',
   'header.setAlias.saved': 'Alias saved',
   'header.setAlias.cleared': 'Alias cleared',
-  'advisor.header.toggle': 'Session Review',
-  'advisor.header.toggle.title': 'Open or collapse the Advisor review panel',
   'promptTab.label': 'Prompts',
   'promptTab.label.active': '🔴 Prompts ({count})',
   'settingsTab.label': 'Memory Evolve Settings',
@@ -1564,8 +1540,6 @@ export const en: Record<MemoryEvolveKey, string> = {
   'panel.guide.prompt.desc': 'Turn recurring working patterns into prompt assets: pick one and inject — the model sees it next turn without interrupting the reply; supports one-shot, N turns, or every-M-turns reminders (numbers freely editable, auto-expiring by turn count), stoppable anytime; ad-hoc injection works without creating a prompt first. Off by default: enable "Prompt manager" under Config.',
   'panel.guide.models.title': 'Model settings (de_models)',
   'panel.guide.models.desc': 'The "Model settings" tab + de_models tool: a table of DSH providers and models with plugin-side per-model settings (enabled, note, thinking support, allowed / recommended reasoning levels incl. custom levels) — these settings only affect this plugin (de_models queries and tab display); DSH own model settings stay untouched. Off by default: enable "Model settings" under Config.',
-  'panel.guide.advisor.title': 'Session review (Advisor)',
-  'panel.guide.advisor.desc': `Attach an independent reviewer to every session — it only observes what you see in the UI (no thinking / tool calls), reviews each turn in real time and nudges you as "user instructions" when needed (info / nit / concern / blocker; info is record-only by default; in the chat flow these appear as collapsed [severity] lines so you can tell them apart). It works as a persistent session — full context, never truncated; the panel supports starting a fresh reviewer, asking it directly, and four levels of constraints (system prompt / project / session / reviewer-session, most-local wins). Off by default: open the master switch under Config, then enable per session in the floating panel; the reviewer model inherits the session model by default and can be set separately.`,
   'panel.guide.broadcast.title': 'Session broadcast (de_broadcast)',
   'panel.guide.broadcast.desc': 'Message passing between DSH sessions: copy your session ID (⧉ button in the session header), send it to another session and let its AI use de_broadcast send to reach you — the receiver snapshot gets a targeted unread notice (visible only to the receiver), the AI reads the full text via list / read, auto-deleted once everyone has read it; very long content is stored to a file. Rooms support multi-member collaboration across working directories; project groups reach a whole directory. Off by default: enable "Session broadcast" under Config.',
   'panel.guide.session.title': 'Session search (de_session_search)',
@@ -1650,23 +1624,10 @@ export const en: Record<MemoryEvolveKey, string> = {
   'panel.config.searchDocsMode.filename': 'Filename only',
   'panel.config.searchDocsMode.content': 'Content only',
   'panel.config.searchDocsMode.off': 'Off (tool invisible)',
-  'panel.config.advisorEnabled': 'Session review (Advisor)',
-  'panel.config.advisorEnabled.hint': 'Master switch for the session-review module. With the switch on, every session still starts OFF — enable reviewing per session from the panel\'s session switch (reviews consume extra model calls, turn them on only where needed; enabled sessions keep their choice across refreshes/restarts). With the switch off, reviewing stops and all review UI (header toggle / floating panel) is hidden; turn it back on to restore the module instantly',
   'panel.config.broadcastEnabled': 'Session broadcast',
   'panel.config.broadcastEnabled.hint': 'Enable session broadcast (de_broadcast): inter-session messaging — the "Session broadcast" unread hint in the snapshot (inbox-style rows: id+subject+sender+time) + the de_broadcast tool (send/list/read; read consumes and auto-deletes once all recipients read; >8KB spills to a file; 30-day cleanup) + the broadcast management panel tab. **Independent of COI dispatch** (off by default, can be enabled alone); when off, all of the above are invisible; the persistent "Your session ID" snapshot section is unaffected; the header "⧉ Copy session ID" / "✎ alias" buttons belong to "Session orchestration" (the panel top also has a copy entry)',
   'panel.config.notifyEnabled': 'Notifications',
-  'panel.config.notifyEnabled.hint': 'Enable the notification module (de_notify): the AI proactively notifies you when a task is done — the de_notify manual tool (send anytime, no frequency limit; channels include feishu/qq/weixin/wecom/web) + automatic COI completion notify (pick channels via coiNotifyChannels). The web channel delivers to an in-app notification bell at the top-right: persisted + unread badge + a popover showing "which session sent what" + click to jump to that session. Independent module, off by default; IM channels require the matching channel plugin (dsh-feishu etc., missing ones reported honestly), the web channel is built in with zero deps; when off, the tool is not registered, the bell disappears, and COI auto-notify silently skips',
-  'notify.title': 'Notifications',
-  'notify.bellAria': 'In-app notifications',
-  'notify.empty': 'No unread notifications',
-  'notify.loading': 'Loading…',
-  'notify.readAll': 'Mark all read',
-  'notify.system': 'System',
-  'notify.jump': 'Jump to session',
-  'notify.delete': 'Delete',
-  'notify.viewDetail': 'View details',
-  'notify.close': 'Close',
-  'notify.markRead': 'Mark read',
+  'panel.config.notifyEnabled.hint': 'Enable the notification module (de_notify): the AI proactively notifies you when a task is done — the de_notify manual tool (send anytime, no frequency limit; channels include feishu/qq/weixin/wecom) + automatic COI completion notify (pick channels via coiNotifyChannels). Independent module, off by default; channels require the matching channel plugin (dsh-feishu etc., missing ones reported honestly); when off, the tool is not registered and COI auto-notify silently skips',
   'panel.config.syncEnabled': 'Memory sync',
   'panel.config.syncEnabled.hint': '**Module switch**: enables the Memory Sync module — the Memory Sync tab appears in conversations and /memory_sync works. **Note: this does NOT start syncing any project** — each project is opted in separately via the "Sync this project" switch in the Memory Sync tab (off by default; never-opted-in projects keep their pure-local state: no Git repo, no entry IDs). Sync moves project memory (KEY + project log + archive + project todos) over Git to one memory remote — leave the URL empty to use your main code repo by default (dedicated branch, zero config); paste a shared memory repo URL to use one private repo for all projects (global memory, phase 2, can only sync through it). Push always requires your explicit trigger',
   'panel.config.sessionSearchEnabled': 'Session search',
@@ -1861,53 +1822,6 @@ export function apply(ctx: Context): void {
     document.head.appendChild(tag)
     return () => { tag.remove() }
   }, 'memory-evolve: bookmark stylesheet')
-
-  // Advisor 悬浮面板样式（advisor- 前缀）：面板本体 portal 到 body，故样式
-  // 必须由客户端入口常驻注入，不能依赖某个 conversation.view Tab 的生命周期。
-  ctx.effect(() => {
-    if (typeof document === 'undefined') return () => {}
-    const existing = document.querySelector('style[data-advisor-css]')
-    if (existing !== null) return () => {}
-    const tag = document.createElement('style')
-    tag.dataset.advisorCss = '1'
-    tag.textContent = advisorStyles
-    document.head.appendChild(tag)
-    return () => { tag.remove() }
-  }, 'memory-evolve: advisor stylesheet')
-
-  // web 站内通知铃铛样式（me-notify- 前缀）：铃铛 portal 到 body，样式须由
-  // 客户端入口常驻注入（与 advisor 悬浮面板同款，不依赖 Tab 生命周期）。
-  ctx.effect(() => {
-    if (typeof document === 'undefined') return () => {}
-    const existing = document.querySelector('style[data-notify-css]')
-    if (existing !== null) return () => {}
-    const tag = document.createElement('style')
-    tag.dataset.notifyCss = '1'
-    tag.textContent = notificationStyles
-    document.head.appendChild(tag)
-    return () => { tag.remove() }
-  }, 'memory-evolve: notification stylesheet')
-
-  // web 站内通知铃铛（全局右上角）：探测宿主端 /api/notifications/unread 成功
-  // 才挂载（notifyEnabled 开启时 API 才挂载，关闭时 404 → 铃铛不注入）。
-  // 「跳转到会话」经 DSH client 的 sessions 服务 ctx.sessions.open(sessionId)
-  // 切换（2026-08-13 调研：官方唯一切换入口，ui-workspace 同款路径）。
-  let notifyBellCancelled = false
-  let disposeNotifyBell: (() => void) | undefined
-  void fetch('/memory-evolve/api/notifications/unread')
-    .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`))))
-    .then(() => {
-      if (notifyBellCancelled) return
-      disposeNotifyBell = createNotificationBell({
-        openSession: (sessionId) => { ctx.sessions.open(sessionId) },
-        t,
-      }).dispose
-    })
-    .catch(() => { /* 通知模块未启用：铃铛保持隐藏 */ })
-  ctx.effect(() => () => {
-    notifyBellCancelled = true
-    disposeNotifyBell?.()
-  }, 'memory-evolve: notification bell')
 
   // 会话页顶部 Tab 顺序（2026-08-11 用户拍板：记忆 技能 待办 COI调度 会话广播
   // 提示词 无限画板 记忆同步 模型设置 书签 Web UI设置 Memory Evolve设置；order
@@ -2167,27 +2081,6 @@ export function apply(ctx: Context): void {
     coiCancelled = true
     disposeCoiTab?.()
   }, 'memory-evolve: coi tab')
-
-  // Advisor 只占 strict-session header.actions：同一组件渲染 header toggle，
-  // 并 createPortal(document.body) 挂悬浮面板；不得注册 conversation.view Tab。
-  // dispose 注册（稳定版复审 P1-1）：插件卸载/热重载时必须移除槽位，
-  // 否则 AdvisorHost 卸载后 store 的轮询失去 UI 但仍持续打 /events。
-  let disposeAdvisor: (() => void) | undefined
-  disposeAdvisor = ctx.slots.inject('conversation.session.header.actions', () =>
-    ctx.slots.register({
-      name: 'conversation.session.header.actions',
-      id: 'advisor-review-panel',
-      order: 30,
-    }, (props) => AdvisorHost({ ...props, t })))
-  ctx.effect(() => () => {
-    disposeAdvisor?.()
-  }, 'memory-evolve: advisor panel')
-
-  // DSH 重连会让 host 的内存 ring/连接代次发生变化；转成浏览器事件后，
-  // 每个 session store 都会取消旧请求、清空 after 游标并立即重新同步。
-  ctx.effect(() => ctx.on('connection/reset', () => {
-    if (typeof window !== 'undefined') window.dispatchEvent(new Event(ADVISOR_CONNECTION_RESET_EVENT))
-  }), 'memory-evolve: advisor connection reset')
 
   // 会话身份配套：会话头部「⧉ 复制会话 ID」「✎ 别名」按钮——**属于会话
   // 编排/身份**（用户拍板 2026-08-09：不是广播的功能，从 broadcastEnabled

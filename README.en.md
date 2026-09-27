@@ -46,7 +46,7 @@ To uninstall: `dsh plugin --profile web remove dsh-memory-evolve`. Everything is
 
 ## Meet It (30 Seconds)
 
-After installing the plugin, open any session and you'll get a row of capability tabs: **Memory · Skills · Todos · Infinite Canvas · COI Scheduling · Session Broadcast · Prompts · Memory Sync · Model Settings · Bookmarks · Session Review · Web UI Settings · Memory Evolve Settings**. On the AI side, you get a batch of tools: memory read/write, todos, skill management, local file search, session orchestration, session broadcast, external-AI dispatch, prompt injection, model query, and more.
+After installing the plugin, open any session and you'll get a row of capability tabs: **Memory · Skills · Todos · Infinite Canvas · COI Scheduling · Session Broadcast · Prompts · Memory Sync · Model Settings · Bookmarks · Web UI Settings · Memory Evolve Settings**. On the AI side, you get a batch of tools: memory read/write, todos, skill management, local file search, session orchestration, session broadcast, external-AI dispatch, prompt injection, model query, and more.
 
 In one sentence: **let the AI remember you, manage for you, do for you, and work together for you.**
 
@@ -209,37 +209,15 @@ The prompt library is an **instruction-paradigm asset library**: code review, de
 - **Mobile browser access**: the DSH UI is adapted for phones — conversation area / message bubbles full-width, input bar "⋯" pulls up the collapsed toolbar and model selection; mobile operation matches desktop;
 - **Session list filtering**: the left list can show only "active sessions", one screen to see who's working — desktop too;
 - **Channel notification (de_notify)**: tell the AI "notify me via Feishu when the task finishes" — important results pushed to Feishu/QQ/WeChat/WeCom, known immediately at the computer or on the phone (notifications carry a "this is a notification" tag and can attach images/files);
-- **Web in-site notification (de_notify channels=web)**: tell the AI "send me an in-site notification" — it lands directly on the **bell at the top-right of the web page** — unread count badge + popup list, showing "which session sent what", click the subject to jump to that session, long content click "view details" for a large popup; the bell is freely draggable and snaps to the left/right screen edge (position remembered). Sending to web and to Feishu etc. is the same sentence, just a different destination (channels `web`, or `all` to send both);
 - **Channel direct-send (de_channel_send)**: the AI proactively sends text/images/files to your IM channel anytime (no notification tag) — the "send me the generated image/document" scenario; all four channels (Feishu/QQ/WeChat/WeCom) supported, attachment sources can be local path / remote URL / inline base64 / **current-session image** (sessionImage=true directly forwards the image you pasted/dragged into the DSH input box; attachmentId explicitly references, pair with de_session_images to first check which images this session has, requires DSH 260810+ snapshot).
 
 **What you get**: heavy work keeps dispatching and progress keeps watched, without you being chained to the computer — back at the desk, take over the session from the left list and continue.
 
 ---
 
-## Scenario 9: Give Every Session an Invisible Reviewer (Session Review)
+## Scenario 10: Scattered Materials, One Canvas (Infinite Canvas)
 
-**Who it's for**: People who want a "second pair of eyes" watching the AI's work without babysitting every line — especially when the project has set discipline (e.g. "state which directory you're in before replying") but you keep finding the AI forgets mid-conversation.
-
-**What it can do**:
-
-- **Independent reviewer**: attach an independent review session to each session; it **only observes the conversation you see on screen** (user words + the Agent's reply body), seeing no thinking process, tool-call params, or other internals — like a colleague sitting beside you who only listens and never touches the keyboard;
-- **Real-time review every turn**: as the conversation advances each turn, the reviewer reviews once based on **full context** — it's a persistent session that remembers all history like a normal long LLM conversation and **never truncates**, never "forgetting what was said earlier";
-- **Real-time steer when needed**: when the reviewer finds something worth saying, it injects into the current session as **a user instruction** — the Agent treats it as your words and executes directly (decided 2026-08-13: testing showed a "non-user instruction" tag makes the Agent question the source and lowers execution, so disguising as a user instruction works best); in the GUI conversation flow these messages show as a **collapsed `[severity]` prefix** line, so you can tell at a glance which words were actually the reviewer's;
-- **Four severity levels**: `info` (record only, not injected into the main session by default, injection configurable) / `nit` (small suggestion) / `concern` (worth handling) / `blocker` (must handle immediately) — not everything interrupts, only what should be said;
-- **New review session**: one click in the panel clears the reviewer's context and memory to start over — the new session's first instruction is where you tell it the background, and you control the context length;
-- **Ask the reviewer directly**: ask anytime in the panel and it answers immediately (answers show only in the review panel, not injected into the main session flow) — like a listening colleague you can ask anytime;
-- **Four-level constraints**: system prompt (global default, view full text / modify / one-click restore) / **project constraint** (shared in this workspace) / **session constraint** (kept for this session) / **this review-session constraint** (cleared with "new review session") — four layers spliced and injected, the more local wins on conflict;
-- **Traceable records**: review records persist as JSONL, traceable in the panel's "Records".
-
-**How to use it**:
-
-1. In "Memory Evolve Settings → Config", turn on **Session Review** (`advisorEnabled`, off by default); the review model inherits the current session model by default, or configure `advisorProvider`/`advisorModel` separately;
-2. The session page shows a "Session Review" floating window — open the panel to see the reviewer's real-time review stream and context usage;
-3. In the "Constraints" tab, set rules for the reviewer (e.g. project constraint: "state which directory you're in before each reply"), saved and effective immediately;
-4. Click "**New review session**" to restart the reviewer from scratch; click "**Ask**" to ask it directly;
-5. Agent side: review reminders appear in the conversation flow as collapsed `[severity]` lines — you can see what the reviewer said and whether the Agent followed.
-
-**What you get**: every AI session gains a continuously-on-duty "listening colleague" — it doesn't interrupt your rhythm, only reminds the Agent to correct course at key moments in your voice; project discipline and session constraints are watched for you, so rules aren't forgotten mid-conversation.
+**Who it's for**: Design drafts in Downloads, contracts in Documents, reference images on the desktop, recordings in your personal folder — people who open Finder and dig layer by layer every time; and people who want the AI to "see" the materials at hand without shoving them all into the conversation context.
 
 ---
 
@@ -276,9 +254,7 @@ The prompt library is an **instruction-paradigm asset library**: code review, de
 - **Session search**: let the AI search other AI tools' (e.g. Codex) historical sessions on this machine — "did XX in Codex before", just ask;
 - **Model config**: the plugin maintains each model's enable status, thinking level, and notes, and marks **image-input support** (🖼 marker, clear at a glance when the AI picks a model);
 - **In-turn memory review**: every N turns, the AI proactively distills memory-worthy info for your confirmation — the memory library grows itself;
-- **Version detection & update**: in multi-device / multi-user deployments, the "Memory Evolve Settings" tab's "Version" page auto-detects remote release versions (git tag v0.x.y); when a new version is detected the settings tab shows a 🔴 red dot, and you decide whether to update (see "Release Versions" below);
-- **Session review (Advisor)**: attach an independent reviewer to each session — observes only on-screen conversation (no thinking / tool calls), real-time review every turn, real-time steer as user instruction when needed (info / nit / concern / blocker four levels; info records-only by default), persistent never-truncating session, supports new review session / direct ask / four-level constraints / traceable records. Off by default, see [Scenario 9](#scenario-9-give-every-session-an-invisible-reviewer-session-review).
-- **Web in-site notification**: channel notification (de_notify) adds a `web` channel — AI notifications land on the web page's top-right bell (unread badge + popup list + click subject to jump session + long-text large popup + drag-snap left/right), same notification semantics as Feishu etc. Off by default, enabled with the notification module (`notifyEnabled`) switch, see [Scenario 8](#scenario-8-use-it-away-from-the-computer-mobile-access--session-filtering--notifications).
+- **Version detection & update**: in multi-device / multi-user deployments, the "Memory Evolve Settings" tab's "Version" page auto-detects remote release versions (git tag v0.x.y); when a new version is detected the settings tab shows a 🔴 red dot, and you decide whether to update (see "Release Versions" below).
 
 Full docs for each feature are in the corresponding tab's "Guide".
 

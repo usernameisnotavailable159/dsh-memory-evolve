@@ -171,9 +171,9 @@ test('notify tool: schema stays DSH-compatible (no type arrays, top-level requir
   }
   walk(tool.parameters, tool.name)
   walk(tool.output.schema, `${tool.name}.output`)
-  // content 必填；channels 枚举含 IM 渠道 + web（内置站内渠道）+ all
+  // content 必填；channels 枚举含 IM 渠道 + all（web 站内渠道已移除）
   assert.ok(tool.parameters.required.includes('content'))
-  assert.deepEqual(tool.parameters.properties.channels.enum, ['feishu', 'qq', 'weixin', 'wecom', 'web', 'all'])
+  assert.deepEqual(tool.parameters.properties.channels.enum, ['feishu', 'qq', 'weixin', 'wecom', 'all'])
   // output 必须声明 schema + render（DSH 硬要求）
   assert.ok(tool.output.schema && typeof tool.output.render === 'function')
   // execute 必须存在（2026-08-09 实测踩坑：漏写 execute 导致
@@ -388,7 +388,7 @@ test('feishu send tool: DSH-compatible schema and execute forwarding', async () 
   assert.ok(tool.output.schema && typeof tool.output.render === 'function')
   assert.ok(typeof tool.execute === 'function')
   assert.equal(tool.name, 'de_channel_send')
-  assert.deepEqual(tool.parameters.properties.channels.enum, ['feishu', 'qq', 'weixin', 'wecom', 'web', 'all'])
+  assert.deepEqual(tool.parameters.properties.channels.enum, ['feishu', 'qq', 'weixin', 'wecom', 'all'])
   assert.deepEqual(tool.parameters.properties.attachments.items.properties.kind.enum, ['image', 'file'])
   // execute 转发直发内核
   const entry = feishuEntry()

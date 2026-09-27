@@ -37,7 +37,6 @@ const PANEL_KEYS = [
   'searchDocsMode',
   'coiEnabled',
   'broadcastEnabled',
-  'advisorEnabled',
   'sessionSearchEnabled',
   'sessionEnabled',
   'promptsEnabled',

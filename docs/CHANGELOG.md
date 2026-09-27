@@ -6,6 +6,14 @@
 
 ---
 
+## 2026-09-27
+
+### 移除
+
+- **移除「会话评审（Advisor）」模块与通知模块的 web 站内渠道（铃铛）**：用户明确表示两项功能完全用不到（评审模块自 2026-08-14 装上后 `~/.dsh/memories/advisor/` 三个数据目录始终为空、`records.jsonl` 从未生成，即从未真正跑过一轮评审；铃铛则在 2026-09-17 后再无新通知，交付汇报也从未走它）。删除范围：Advisor 全部宿主半（`lib/advisor/` 14 个文件）与客户端半（`src/client/advisor/`）、11 个 advisor 测试；通知模块的 web 渠道（`lib/notify-web.js`、`src/client/notification-bell.tsx`、`notification-styles.css`、`tests/notify-web.test.js`）。同步清理接线：`lib/index.js` 的 advisor 配置键/校验/安装块与 `notifyWebStoreRef`、`lib/i18n.js` 的 `adv.*`/`notify.missing` 字典、客户端入口的多处槽位注册与 i18n 字典项、`MemoryQueueView.tsx` 的配置开关。**de_notify 的 IM 渠道（飞书/QQ/微信/企微）与 de_channel_send 原样保留**（`tests/notify.test.js` 42/42 通过）。重建后 `lib/client.js` 由 823.8KB 降至 713.8KB（-109.9KB / -13.35%），全量测试 675/676 通过（唯一失败为改动前既有的 `coi.test.js` 用例）。
+
+---
+
 ## 2026-09-09
 
 ### 修复
