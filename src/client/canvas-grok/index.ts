@@ -42,7 +42,7 @@ export interface RegisterCanvasTabOpts {
   /** 可选覆盖：排序（默认 80） */
   order?: number
   /** 跳转到指定会话（2026-08-14：双击「其他会话」徽标调用；
-   * 主会话注入 ctx.sessions.open，与 web 通知铃铛同款路径）。 */
+   * 主会话注入 ctx.sessions.open）。 */
   openSession?: (sessionId: string) => void
 }
 

@@ -61,7 +61,7 @@ import type {
 export interface CanvasViewProps {
   t: Translate
   /** 跳转到指定会话（2026-08-14：双击「其他会话」徽标调用，主会话
-   * 注入 ctx.sessions.open——与 web 通知铃铛同款路径）。 */
+   * 注入 ctx.sessions.open）。 */
   openSession?: (sessionId: string) => void
 }
 

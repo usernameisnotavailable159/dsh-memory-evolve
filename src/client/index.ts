@@ -2321,8 +2321,7 @@ export function apply(ctx: Context): void {
   // ctx 断言为 CanvasTabHost：cordis Context 类型缺 slots（项目既有类型
   // 环境问题，全部 slots 调用同源），运行时由客户端运行时注入。
   // openSession（2026-08-14）：footer「跳转」按钮跳转归属会话——
-  // 与 web 通知铃铛同款路径 ctx.sessions.open(sessionId)（官方唯一
-  // 切换入口）。
+  // 走 ctx.sessions.open(sessionId)（官方唯一切换入口）。
   // ⚠️ 2026-08-14 修复：Tab 注册必须跟随 canvasEnabled 开关（与书签
   // 同款探测模式）——曾无条件注册，开关关闭时 Tab 还在（只剩后端
   // 同步被关），用户预期「关=整个画板不可见」；现在探测

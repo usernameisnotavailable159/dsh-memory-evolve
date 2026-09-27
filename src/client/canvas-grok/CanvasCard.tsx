@@ -25,7 +25,7 @@ export interface CanvasCardProps {
    * （2026-08-14 用户反馈：卡片只有静态填充，至少图片要直接显示）。 */
   backendReady: boolean
   /** 双击「其他会话」徽标跳转对应会话（2026-08-14：主会话注入
-   * ctx.sessions.open，与 web 通知铃铛同款路径）。 */
+   * ctx.sessions.open）。 */
   openSession?: (sessionId: string) => void
   onSelect: (id: string) => void
   onDragStart: (id: string, event: ReactPointerEvent<HTMLElement>) => void
